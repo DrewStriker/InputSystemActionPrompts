@@ -49,7 +49,7 @@ namespace InputSystemActionPrompts
         /// <summary>
         /// Applies text with prompt sprites to the TextMeshProUGUI component
         /// </summary>
-        private void RefreshText()
+        public void RefreshText()
         {
             if (m_TextField == null) return;
             m_TextField.text = InputDevicePromptSystem.InsertPromptSprites(m_OriginalText);
