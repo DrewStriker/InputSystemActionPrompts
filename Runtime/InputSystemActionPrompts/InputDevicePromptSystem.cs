@@ -268,7 +268,7 @@ namespace InputSystemActionPrompts
 
             if (matchingPrompt == null || matchingPrompt.Count == 0)
             {
-                return $"MISSING_PROMPT '{inputTag}'";
+                return $"N/A";
             }
             // Return each
             var outputText = string.Empty;
