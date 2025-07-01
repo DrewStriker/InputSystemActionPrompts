@@ -9,7 +9,7 @@ namespace InputSystemActionPrompts
     public class PromptText : MonoBehaviour
     {
         [SerializeField] private InputActionAsset m_InputActionAsset;
-        
+
         /// <summary>
         /// Cached TextMeshProUGUI component that we'll apply the prompt sprites to
         /// </summary>
@@ -19,22 +19,22 @@ namespace InputSystemActionPrompts
         /// Cached original text, so we can reapply it if the input device changes
         /// </summary>
         private string m_OriginalText;
-        
-        
+
+
         void Start()
         {
             m_TextField = GetComponent<TextMeshProUGUI>();
             if (m_TextField == null) return;
-            m_OriginalText=m_TextField.text;
+            m_OriginalText = m_TextField.text;
             RefreshText();
             // Listen to device changing
-            InputDevicePromptSystem.OnActiveDeviceChanged+= DeviceChanged;
+            InputDevicePromptSystem.OnActiveDeviceChanged += DeviceChanged;
         }
 
         private void OnDestroy()
         {
             // Remove listener
-            InputDevicePromptSystem.OnActiveDeviceChanged-= DeviceChanged;
+            InputDevicePromptSystem.OnActiveDeviceChanged -= DeviceChanged;
         }
 
         /// <summary>

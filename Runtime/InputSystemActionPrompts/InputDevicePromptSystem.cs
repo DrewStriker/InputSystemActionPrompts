@@ -27,9 +27,11 @@ namespace InputSystemActionPrompts
     /// </summary>
     public class ActionBindingMapEntry
     {
+        public string OriginalPath;
         public string BindingPath;
         public bool IsComposite;
         public bool IsPartOfComposite;
+        public string BindingID;
     }
 
     public static class InputDevicePromptSystem
@@ -163,6 +165,7 @@ namespace InputSystemActionPrompts
             var replacedText = inputText;
             foreach (var tag in foundTags)
             {
+
                 var replacementTagText = GetActionPathBindingTextSpriteTags(tag);
 
                 //if PromptSpriteFormatter is empty for some reason return the text as if formatter was {SPRITE} (normally)
@@ -174,8 +177,8 @@ namespace InputSystemActionPrompts
                 replacedText = replacedText.Replace($"{s_Settings.OpenTag}{tag}{s_Settings.CloseTag}", replacementTagText);
                 //replacedText = "AAAAAAA";
             }
-
             return replacedText;
+
         }
 
         /// <summary>
@@ -268,6 +271,8 @@ namespace InputSystemActionPrompts
 
             if (matchingPrompt == null || matchingPrompt.Count == 0)
             {
+                //Debug.Log("MATCHING PROMPT NULL " + matchingPrompt == null);
+                //Debug.Log("MATCHING PROMPT COUNT " + matchingPrompt.Count);
                 return $"N/A";
             }
             // Return each
@@ -287,7 +292,6 @@ namespace InputSystemActionPrompts
         private static (InputDevicePromptData, List<ActionBindingPromptEntry>) GetActionPathBindingPromptEntries(string inputTag)
         {
             InputDevicePromptData validDevice;
-
             var lowerCaseTag = inputTag.ToLower();
             if (!s_ActionBindingMap.ContainsKey(lowerCaseTag)) return (null, null);
 
@@ -305,11 +309,12 @@ namespace InputSystemActionPrompts
 
             var validEntries = new List<ActionBindingPromptEntry>();
             var actionBindings = s_ActionBindingMap[lowerCaseTag];
-
             foreach (var actionBinding in actionBindings)
             {
                 //Debug.Log($"Checking binding '{actionBinding}' on device {validDevice.name}");
                 var usage = GetUsageFromBindingPath(actionBinding.BindingPath);
+
+                //Debug.Log("INPUT TAG = " + inputTag.ToLower() + " " + actionBinding.BindingPath.ToString());
                 if (string.IsNullOrEmpty(usage))
                 {
                     var matchingPrompt = validDevice.ActionBindingPromptEntries.FirstOrDefault((prompt) =>
@@ -341,8 +346,10 @@ namespace InputSystemActionPrompts
                         {
                             foreach (var controlUsage in control.usages)
                             {
+                                Debug.Log($"USAGE = {controlUsage}");
                                 if (controlUsage.ToLower() == usage.ToLower())
                                 {
+
                                     // Match! Search for prompt entry with same extension (ignore first part eg "gamepad")
                                     var matchingPrompt = validDevice.ActionBindingPromptEntries.FirstOrDefault((prompt) =>
                                         String.Equals(prompt.ActionBindingPath.Split('/').Last(), control.name,
@@ -360,6 +367,73 @@ namespace InputSystemActionPrompts
             }
 
             return (validDevice, validEntries);
+        }
+
+        public static InputDevice GetActiveDevice()
+        {
+            return s_ActiveDevice;
+        }
+
+        public static void VerifyInputBindingID(InputAction action, string[] bindingOptions, ref string bindingID)
+        {
+            InputDevicePromptData validDevice;
+
+            string actionName = $"[{action.actionMap.name}/{action.name}]";
+            var tags = GetTagList(actionName);
+            var lowerCaseTag = tags[0].ToLower();
+            var binding = bindingID;
+            var bindingIndex = action.bindings.IndexOf(x => x.id.ToString() == binding);
+
+            if (!s_ActionBindingMap.ContainsKey(lowerCaseTag))
+            {
+                Debug.Log("CASE AAAAAA");
+                return;
+            }
+
+            if (s_PlatformDeviceOverride != null)
+            {
+                validDevice = s_PlatformDeviceOverride;
+            }
+            else
+            {
+                if (s_ActiveDevice == null)
+                {
+                    Debug.Log("CASE BBBBBBB");
+                    return;
+                }
+                if (!s_DeviceDataBindingMap.ContainsKey(s_ActiveDevice.name))
+                {
+                    Debug.Log("CASE CCCCCCC");
+                    return;
+                }
+
+                validDevice = s_DeviceDataBindingMap[s_ActiveDevice.name];
+            }
+
+            var actionBindings = s_ActionBindingMap[lowerCaseTag];
+
+            for (int i = 0; i < bindingOptions.Length; i++)
+            {
+                foreach (var actionBinding in actionBindings)
+                {
+                    var matchingPrompt = validDevice.ActionBindingPromptEntries.FirstOrDefault((prompt) =>
+                        String.Equals(prompt.ActionBindingPath, actionBinding.OriginalPath,
+                            StringComparison.CurrentCultureIgnoreCase));
+                    if (matchingPrompt != null)
+                    {
+                        //if (action.bindings[bindingIndex].path != actionBinding.OriginalPath) continue;
+                        if (bindingOptions[i] == actionBinding.BindingID)
+                        {
+                            bindingID = bindingOptions[i];
+                            Debug.Log($"STRING FOUND ON BINDING ID VERIFICATION OF {actionName} ({actionBinding.OriginalPath})");
+                            return;
+                        }
+
+                    }
+
+                }
+
+            }
         }
 
         /// <summary>
@@ -447,12 +521,14 @@ namespace InputSystemActionPrompts
                         var bindingPathLower = bindingPath.ToLower();
                         //Debug.Log(bindingPathLower);
 
-                        //Debug.Log($"Binding {bindingPathLower} to path {binding.path}");
+                        Debug.Log($"Binding {bindingPathLower} to path {binding.path}");
                         var entry = new ActionBindingMapEntry
                         {
+                            OriginalPath = binding.path,
                             BindingPath = binding.effectivePath,
                             IsComposite = binding.isComposite,
-                            IsPartOfComposite = binding.isPartOfComposite
+                            IsPartOfComposite = binding.isPartOfComposite,
+                            BindingID = binding.id.ToString(),
                         };
                         if (s_ActionBindingMap.TryGetValue(bindingPathLower, out var value))
                         {
@@ -489,23 +565,55 @@ namespace InputSystemActionPrompts
         {
             if (s_ActionBindingMap == null)
             {
-                BuildBindingMaps();
+                //BuildBindingMaps();
+                Initialise();
                 return;
             }
 
             string key = bindingPath.ToLower();
+
             if (s_ActionBindingMap.ContainsKey(key))
             {
                 var binding = action.bindings[bindingIndex];
-
-                var newEntry = new ActionBindingMapEntry
+                foreach (var bindingEntry in s_ActionBindingMap[key])
                 {
-                    BindingPath = binding.effectivePath,
-                    IsComposite = binding.isComposite,
-                    IsPartOfComposite = binding.isPartOfComposite
-                };
+                    // Tentar fazer uma verificação dentro dos s_ActionBindingMap[key] para verificar se binding.path é igual ao bindingEntry.effectivePath
+                    if (bindingEntry.OriginalPath == binding.path)
+                    {
+                        var newEntry = new ActionBindingMapEntry
+                        {
+                            OriginalPath = binding.path,
+                            BindingPath = binding.effectivePath,
+                            IsComposite = binding.isComposite,
+                            IsPartOfComposite = binding.isPartOfComposite,
+                            BindingID = bindingEntry.BindingID,
+                        };
 
-                s_ActionBindingMap[key][0] = newEntry;
+                        int index = s_ActionBindingMap[key].IndexOf(bindingEntry);
+                        //Debug.Log($"{action.name} ORIGINAL PATH = " + s_ActionBindingMap[key][index].BindingPath);
+                        s_ActionBindingMap[key][index] = newEntry;
+                        return;
+                    }
+
+                    if (bindingEntry.BindingPath == binding.effectivePath)
+                    {
+                        var newEntry = new ActionBindingMapEntry
+                        {
+                            OriginalPath = binding.path,
+                            BindingPath = binding.effectivePath,
+                            IsComposite = binding.isComposite,
+                            IsPartOfComposite = binding.isPartOfComposite,
+                            BindingID = bindingEntry.BindingID,
+                        };
+
+                        int index = s_ActionBindingMap[key].IndexOf(bindingEntry);
+                        //Debug.Log($"{action.name} EFFECTIVE PATH = " + s_ActionBindingMap[key][index].BindingPath);
+                        s_ActionBindingMap[key][index] = newEntry;
+                        return;
+                    }
+
+                }
+
             }
 
         }
