@@ -103,7 +103,7 @@ namespace InputSystemActionPrompts
         /// </summary>
         private static void Initialise()
         {
-            Debug.Log("Initialising InputDevicePromptSystem");
+            // Debug.Log("Initialising InputDevicePromptSystem");
             s_Settings = InputSystemDevicePromptSettings.GetSettings();
 
             if (s_Settings == null)
@@ -256,7 +256,7 @@ namespace InputSystemActionPrompts
 
                 if (!s_DeviceDataBindingMap.ContainsKey(activeDeviceName))
                 {
-                    return $"MISSING_DEVICE_ENTRIES '{activeDeviceName}'";
+                    return "<sprite=\"MouseKeyboardDark_Prompts\" name=\"\">";
                 }
             }
 
@@ -264,7 +264,8 @@ namespace InputSystemActionPrompts
 
             if (!s_ActionBindingMap.ContainsKey(lowerCaseTag))
             {
-                return $"MISSING_ACTION {lowerCaseTag}";
+                // return $"MISSING_ACTION {lowerCaseTag}";
+                return "<sprite=\"MouseKeyboardDark_Prompts\" name=\"\">";
             }
 
             var (validDevice, matchingPrompt) = GetActionPathBindingPromptEntries(inputTag);
@@ -273,7 +274,8 @@ namespace InputSystemActionPrompts
             {
                 //Debug.Log("MATCHING PROMPT NULL " + matchingPrompt == null);
                 //Debug.Log("MATCHING PROMPT COUNT " + matchingPrompt.Count);
-                return $"N/A";
+                return "<sprite=\"MouseKeyboardDark_Prompts\" name=\"\">";
+                // return "N/A";
             }
             // Return each
             var outputText = string.Empty;
@@ -346,7 +348,7 @@ namespace InputSystemActionPrompts
                         {
                             foreach (var controlUsage in control.usages)
                             {
-                                Debug.Log($"USAGE = {controlUsage}");
+                                // Debug.Log($"USAGE = {controlUsage}");
                                 if (controlUsage.ToLower() == usage.ToLower())
                                 {
 
@@ -386,7 +388,7 @@ namespace InputSystemActionPrompts
 
             if (!s_ActionBindingMap.ContainsKey(lowerCaseTag))
             {
-                Debug.Log("CASE AAAAAA");
+                // Debug.Log("CASE AAAAAA");
                 return;
             }
 
@@ -398,12 +400,12 @@ namespace InputSystemActionPrompts
             {
                 if (s_ActiveDevice == null)
                 {
-                    Debug.Log("CASE BBBBBBB");
+                    // Debug.Log("CASE BBBBBBB");
                     return;
                 }
                 if (!s_DeviceDataBindingMap.ContainsKey(s_ActiveDevice.name))
                 {
-                    Debug.Log("CASE CCCCCCC");
+                    // Debug.Log("CASE CCCCCCC");
                     return;
                 }
 
@@ -425,7 +427,7 @@ namespace InputSystemActionPrompts
                         if (bindingOptions[i] == actionBinding.BindingID)
                         {
                             bindingID = bindingOptions[i];
-                            Debug.Log($"STRING FOUND ON BINDING ID VERIFICATION OF {actionName} ({actionBinding.OriginalPath})");
+                            // Debug.Log($"STRING FOUND ON BINDING ID VERIFICATION OF {actionName} ({actionBinding.OriginalPath})");
                             return;
                         }
 
@@ -521,7 +523,7 @@ namespace InputSystemActionPrompts
                         var bindingPathLower = bindingPath.ToLower();
                         //Debug.Log(bindingPathLower);
 
-                        Debug.Log($"Binding {bindingPathLower} to path {binding.path}");
+                        // Debug.Log($"Binding {bindingPathLower} to path {binding.path}");
                         var entry = new ActionBindingMapEntry
                         {
                             OriginalPath = binding.path,
