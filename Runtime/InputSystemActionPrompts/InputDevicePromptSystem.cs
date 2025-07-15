@@ -73,6 +73,7 @@ namespace InputSystemActionPrompts
         private static IDisposable s_EventListener;
 
         private static InputDevicePromptData s_PlatformDeviceOverride;
+        private const string emojiIconTag = "<sprite=\"MouseKeyboardDark_Prompts\" name=\"\">";
 
         public static bool GetPlatformDeviceOverride(out InputDevicePromptData inputDevice)
         {
@@ -256,7 +257,7 @@ namespace InputSystemActionPrompts
 
                 if (!s_DeviceDataBindingMap.ContainsKey(activeDeviceName))
                 {
-                    return "<sprite=\"MouseKeyboardDark_Prompts\" name=\"\">";
+                    return emojiIconTag;
                 }
             }
 
@@ -265,7 +266,7 @@ namespace InputSystemActionPrompts
             if (!s_ActionBindingMap.ContainsKey(lowerCaseTag))
             {
                 // return $"MISSING_ACTION {lowerCaseTag}";
-                return "<sprite=\"MouseKeyboardDark_Prompts\" name=\"\">";
+                return emojiIconTag;
             }
 
             var (validDevice, matchingPrompt) = GetActionPathBindingPromptEntries(inputTag);
@@ -274,7 +275,7 @@ namespace InputSystemActionPrompts
             {
                 //Debug.Log("MATCHING PROMPT NULL " + matchingPrompt == null);
                 //Debug.Log("MATCHING PROMPT COUNT " + matchingPrompt.Count);
-                return "<sprite=\"MouseKeyboardDark_Prompts\" name=\"\">";
+                return emojiIconTag;
                 // return "N/A";
             }
             // Return each
